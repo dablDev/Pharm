@@ -12,7 +12,7 @@ class Pathfinder:
         head_file = open(xsd_path + head_xsd_name, 'rb')
         self.export_elems = xmltodict.parse(head_file)['xs:schema']['xs:element']\
         ['xs:complexType']['xs:sequence']['xs:choice']['xs:element']
-                
+
     def ConvertValues(self, xml):
         xml_new = {}
         self._preprocessing(xml, xml_new)
@@ -23,7 +23,7 @@ class Pathfinder:
         else:
             raise Exception("Not an export")
         return xml_new['export']
-        
+
     def __go_deeper(self, xsd_elem, schema, xml_dict, elem_name):
         if isinstance(xml_dict, dict):
             for key in xsd_elem:
@@ -42,7 +42,7 @@ class Pathfinder:
                     self.__go_deeper(xsd_elem, schema, xml_item, elem_name )
                 else:
                     raise Exception("{}".format(type(xml_item)))
-    
+
     def __complex_transition(self, xsd_elem, schema, xml_dict, elem_name, key):
         if key == 'xs:complexType':
             self.__go_deeper(xsd_elem['xs:complexType'], schema, xml_dict[xsd_elem['@name']], xsd_elem['@name'])
@@ -52,7 +52,7 @@ class Pathfinder:
                 for xsd_item in xsd_elem['xs:choice']:
                     self.__go_deeper(xsd_item, schema, xml_dict, elem_name)
             else:
-                self.__go_deeper(xsd_elem['xs:choice'], schema, xml_dict, elem_name)    
+                self.__go_deeper(xsd_elem['xs:choice'], schema, xml_dict, elem_name)
 
         elif key == '@base':
             if 'xs:' not in xsd_elem['@base']:
@@ -77,7 +77,7 @@ class Pathfinder:
                     for i, xml_item in enumerate(xml_dict[elem_name]):
                         xml_dict[elem_name][i] = eval("{}(xml_item)".format(type_dict[xsd_elem['@base']]))
                 else:
-                    xml_dict[elem_name] = eval("{}(xml_dict[elem_name])".format(type_dict[xsd_elem['@type']]))  
+                    xml_dict[elem_name] = eval("{}(xml_dict[elem_name])".format(type_dict[xsd_elem['@type']]))
 
         elif key == 'xs:sequence':
             if isinstance(xsd_elem['xs:sequence'], list):
@@ -93,7 +93,7 @@ class Pathfinder:
             else:
                 xsd_item = xsd_elem['xs:element']
                 if xsd_item['@name'] in xml_dict:
-                    self.__go_deeper(xsd_item, schema, xml_dict, xsd_item['@name'])  
+                    self.__go_deeper(xsd_item, schema, xml_dict, xsd_item['@name'])
 
     def __find_elem_in_schema(self, element_type, schema):
         found = False
@@ -125,7 +125,7 @@ class Pathfinder:
             print(element_type)
         assert(found)
         return elem, current_schema, type_
-    
+
     def __change_base_types(self):
         schema = self.schema_dict['base']
         assert( ('xs:simpleType' in schema.keys()) and (isinstance(schema['xs:simpleType'], list))),\
@@ -149,8 +149,8 @@ class Pathfinder:
                     temp_elem = elem.split(':')[1]
                 else:
                     temp_elem = elem
-                if isinstance(dic[elem], dict):     
-                    copy_dic[temp_elem] = {}            
+                if isinstance(dic[elem], dict):
+                    copy_dic[temp_elem] = {}
                     self._preprocessing(dic[elem], copy_dic[temp_elem])
                 elif isinstance(dic[elem], list):
                     copy_dic[temp_elem] = []
@@ -172,8 +172,8 @@ class Pathfinder:
                 else:
                     done = Pathfinder.__preprocess_values(dic, elem, copy_dic, temp_elem)
                     if not done:
-                        copy_dic[temp_elem] = dic[elem]  
-    
+                        copy_dic[temp_elem] = dic[elem]
+
     @staticmethod
     def __preprocess_values(dic, elem, copy_dic, temp_elem):
         done = False
@@ -187,13 +187,13 @@ class Pathfinder:
             copy_dic[temp_elem] = dic[elem].split('+')[0]
             done = True
         return done
-    
+
     @staticmethod
     def __fill_ident_dict(ident_dict, schema):
         for ident_elem in schema:
             if '@xmlns:' in ident_elem:
                 ident_dict[ident_elem.split(':')[1]] = schema[ident_elem]
-    
+
     @staticmethod
     def __fill_import_dict(import_dict, schema):
         if 'xs:import' in schema:
@@ -203,7 +203,7 @@ class Pathfinder:
                     import_dict[import_elem['@namespace']] = import_elem['@schemaLocation']
             else:
                 import_dict[import_sch['@namespace']] = import_sch['@schemaLocation']
-    
+
     @staticmethod
     def __make_prefix_dict (xsd_path):
         ident_dict = {}
@@ -221,11 +221,13 @@ class Pathfinder:
             if ident_dict[prefix] in import_dict.keys():
                 prefix_dict[prefix] = import_dict[ident_dict[prefix]]
         return prefix_dict
-    
+
     @staticmethod
-    def __make_schema_dict (xsd_path):
+    def __make_schema_dict(xsd_path):
         pr_dict = Pathfinder.__make_prefix_dict(xsd_path)
         schema_dict = {}
         for prefix in pr_dict:
             schema_dict[prefix] = xmltodict.parse(open(xsd_path + pr_dict[prefix], 'rb'))['xs:schema']
         return schema_dict
+
+    
